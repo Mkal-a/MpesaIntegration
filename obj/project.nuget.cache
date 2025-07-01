@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "N3JbX57U4ow=",
+  "success": true,
+  "projectFilePath": "D:\\Developers Hub\\KMMS\\MpesaIntegration\\MpesaIntegration.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\mkala\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.6\\microsoft.aspnetcore.openapi.9.0.6.nupkg.sha512",
+    "C:\\Users\\mkala\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
