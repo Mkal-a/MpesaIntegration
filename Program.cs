@@ -1,41 +1,42 @@
 ﻿var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 // Add services to the container
-builder.Services.AddControllers().AddNewtonsoftJson(); // ✅ Add Newtonsoft.Json for STK Callback
-builder.Services.AddOpenApi(); // Optional if you're using OpenAPI docs
-
+builder.Services.AddControllers().AddNewtonsoftJson(); // For JSON callbacks
+builder.Services.AddOpenApi(); // Optional
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseHttpsRedirection(); // ✅ Only use HTTPS redirection in development
+    app.UseHttpsRedirection(); // Only for local testing
 }
 
-// No HTTPS redirection in production (Render already handles HTTPS)
+// ✅ Map your API controllers
+app.MapControllers();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
+// Optional test endpoint
 app.MapGet("/weatherforecast", () =>
 {
+    var summaries = new[]
+    {
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    };
+
     var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
+        new WeatherForecast(
             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
             Random.Shared.Next(-20, 55),
             summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
+        )).ToArray();
+
     return forecast;
 })
 .WithName("GetWeatherForecast");
 
+app.MapControllers(); // Ensure your Controllers are mapped in both Dev & Production
+// For production, you might want to use app.UseHttpsRedirection() only if you have SSL configured
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)

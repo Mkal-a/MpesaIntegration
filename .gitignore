@@ -1,0 +1,9 @@
+# Ignore build and user-specific files
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.db-shm
+*.db-wal
+*.vscode/

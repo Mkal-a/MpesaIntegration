@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace MpesaIntegration.Controllers
 {
@@ -18,23 +19,37 @@ namespace MpesaIntegration.Controllers
             Console.WriteLine(callbackData.ToString());
 
             var body = callbackData["Body"]?["stkCallback"];
-            var resultCode = body?["ResultCode"]?.ToString();
             var resultDesc = body?["ResultDesc"]?.ToString();
             var metadataItems = body?["CallbackMetadata"]?["Item"] as JArray;
 
-            // Extract phone number (if available)
+            // Extract metadata
             string? phone = metadataItems?
                 .FirstOrDefault(i => i["Name"]?.ToString() == "PhoneNumber")?["Value"]?.ToString();
 
             string? mpesaReceipt = metadataItems?
                 .FirstOrDefault(i => i["Name"]?.ToString() == "MpesaReceiptNumber")?["Value"]?.ToString();
 
-            string message = $"Result: {resultDesc}, Receipt: {mpesaReceipt}";
+            string? firstName = metadataItems?
+                .FirstOrDefault(i => i["Name"]?.ToString() == "FirstName")?["Value"]?.ToString();
+
+            string? lastName = metadataItems?
+                .FirstOrDefault(i => i["Name"]?.ToString() == "LastName")?["Value"]?.ToString();
+
+            string fullName = $"{firstName} {lastName}".Trim();
+
+            string message = $"Payment Successful!\n" +
+                             $"Name: {fullName}\n" +
+                             $"Phone: {phone}\n" +
+                             $"Receipt: {mpesaReceipt}\n" +
+                             $"Status: {resultDesc}";
 
             // Save using phone as key if available
             if (!string.IsNullOrEmpty(phone))
             {
                 PaymentStatuses[phone] = message;
+
+                // ✅ Save to polling queue for WinForms polling
+                PollingController.SaveCallbackMessage(message);
             }
 
             return Ok(); // Always send 200 OK to Safaricom
