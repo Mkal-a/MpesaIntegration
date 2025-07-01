@@ -1,8 +1,10 @@
 ﻿var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Add services to the container
+builder.Services.AddControllers().AddNewtonsoftJson(); // ✅ Add Newtonsoft.Json for STK Callback
+builder.Services.AddOpenApi(); // Optional if you're using OpenAPI docs
+
 
 var app = builder.Build();
 

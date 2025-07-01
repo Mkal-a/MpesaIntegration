@@ -31,3 +31,8 @@ D:\Developers Hub\KMMS\MpesaIntegration\obj\Debug\net9.0\refint\MpesaIntegration
 D:\Developers Hub\KMMS\MpesaIntegration\obj\Debug\net9.0\MpesaIntegration.pdb
 D:\Developers Hub\KMMS\MpesaIntegration\obj\Debug\net9.0\MpesaIntegration.genruntimeconfig.cache
 D:\Developers Hub\KMMS\MpesaIntegration\obj\Debug\net9.0\ref\MpesaIntegration.dll
+D:\Developers Hub\KMMS\MpesaIntegration\bin\Debug\net9.0\Microsoft.AspNetCore.JsonPatch.dll
+D:\Developers Hub\KMMS\MpesaIntegration\bin\Debug\net9.0\Microsoft.AspNetCore.Mvc.NewtonsoftJson.dll
+D:\Developers Hub\KMMS\MpesaIntegration\bin\Debug\net9.0\Newtonsoft.Json.dll
+D:\Developers Hub\KMMS\MpesaIntegration\bin\Debug\net9.0\Newtonsoft.Json.Bson.dll
+D:\Developers Hub\KMMS\MpesaIntegration\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt
