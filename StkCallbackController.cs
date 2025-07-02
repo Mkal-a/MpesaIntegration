@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
+using Microsoft.Data.SqlClient; // ✅ Your preferred modern driver
 using System.Linq;
 
 namespace MpesaIntegration.Controllers
@@ -9,7 +10,6 @@ namespace MpesaIntegration.Controllers
     [Route("api/stkcallback")]
     public class StkCallbackController : ControllerBase
     {
-        // In-memory status storage (thread-safe)
         private static ConcurrentDictionary<string, string> PaymentStatuses = new();
 
         [HttpPost]
@@ -22,40 +22,54 @@ namespace MpesaIntegration.Controllers
             var resultDesc = body?["ResultDesc"]?.ToString();
             var metadataItems = body?["CallbackMetadata"]?["Item"] as JArray;
 
-            // Extract metadata
-            string? phone = metadataItems?
-                .FirstOrDefault(i => i["Name"]?.ToString() == "PhoneNumber")?["Value"]?.ToString();
+            string? phone = metadataItems?.FirstOrDefault(i => i["Name"]?.ToString() == "PhoneNumber")?["Value"]?.ToString();
+            string? mpesaReceipt = metadataItems?.FirstOrDefault(i => i["Name"]?.ToString() == "MpesaReceiptNumber")?["Value"]?.ToString();
+            string? firstName = metadataItems?.FirstOrDefault(i => i["Name"]?.ToString() == "FirstName")?["Value"]?.ToString();
+            string? lastName = metadataItems?.FirstOrDefault(i => i["Name"]?.ToString() == "LastName")?["Value"]?.ToString();
 
-            string? mpesaReceipt = metadataItems?
-                .FirstOrDefault(i => i["Name"]?.ToString() == "MpesaReceiptNumber")?["Value"]?.ToString();
-
-            string? firstName = metadataItems?
-                .FirstOrDefault(i => i["Name"]?.ToString() == "FirstName")?["Value"]?.ToString();
-
-            string? lastName = metadataItems?
-                .FirstOrDefault(i => i["Name"]?.ToString() == "LastName")?["Value"]?.ToString();
-
-            string fullName = $"{firstName} {lastName}".Trim();
-
-            string message = $"Payment Successful!\n" +
-                             $"Name: {fullName}\n" +
-                             $"Phone: {phone}\n" +
-                             $"Receipt: {mpesaReceipt}\n" +
-                             $"Status: {resultDesc}";
-
-            // Save using phone as key if available
             if (!string.IsNullOrEmpty(phone))
             {
-                PaymentStatuses[phone] = message;
+                // Save to SQL Server
+                try
+                {
+                    string connectionString = "Server=localhost;Database=KMMS;Trusted_Connection=True;";
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        using (SqlCommand cmd = new SqlCommand(@"
+                            INSERT INTO MpesaTransactions (PhoneNumber, MpesaReceiptNumber, FirstName, LastName, ResultDesc)
+                            VALUES (@PhoneNumber, @MpesaReceiptNumber, @FirstName, @LastName, @ResultDesc)", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@PhoneNumber", phone ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@MpesaReceiptNumber", mpesaReceipt ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@FirstName", firstName ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@LastName", lastName ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@ResultDesc", resultDesc ?? (object)DBNull.Value);
 
-                // ✅ Save to polling queue for WinForms polling
-                PollingController.SaveCallbackMessage(message);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    // Also save to memory cache for polling
+                    string fullName = $"{firstName} {lastName}".Trim();
+                    string message = $"Payment Successful!\n" +
+                                     $"Name: {fullName}\n" +
+                                     $"Phone: {phone}\n" +
+                                     $"Receipt: {mpesaReceipt}\n" +
+                                     $"Status: {resultDesc}";
+
+                    PaymentStatuses[phone!] = message; // Fix: Use null-forgiving operator (!) to ensure phone is not null.
+                    PollingController.SaveCallbackMessage(message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("❌ Error inserting into database: " + ex.Message);
+                }
             }
 
-            return Ok(); // Always send 200 OK to Safaricom
+            return Ok();
         }
 
-        // Polling endpoint for desktop client
         [HttpGet("/api/paymentstatus")]
         public IActionResult GetStatus([FromQuery] string phone)
         {

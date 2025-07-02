@@ -1,0 +1,9 @@
+| Layer             | Tech Used                          |
+| ----------------- | ---------------------------------- |
+| Desktop App       | C# WinForms                        |
+| HTTP              | `HttpClient`                       |
+| M-Pesa            | Safaricom Daraja API (STK Push)    |
+| Web API           | ASP.NET Core (on Render)           |
+| Callback Handling | JSON.NET (JObject)                 |
+| Polling           | REST endpoint `/api/paymentstatus` |
+| Communication     | HTTPS via Render.com               |
